@@ -5,21 +5,22 @@ on:
     branches: [codex/validate-browser-window]
 
 jobs:
-  test:
+  baseline:
     runs-on: macos-26
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: c64c9647704779ffa641e8870adabbd8fdf0476f
       - name: Configure unsigned build
         run: |
           cp User.template.xcconfig Config/User.xcconfig
           xcodebuild -version
-      - name: Run browser layout tests on Mac Catalyst
+      - name: Build unchanged upstream on Mac Catalyst
         run: |
           set -o pipefail
-          xcodebuild test -scheme Moblin \
+          xcodebuild build -quiet -scheme Moblin \
             -destination 'platform=macOS,variant=Mac Catalyst' \
-            -only-testing:MoblinTests/WebBrowserWindowLayoutSuite \
             -resultBundlePath BrowserLayout.xcresult \
             CODE_SIGNING_ALLOWED=NO DEVELOPMENT_TEAM= \
             BASE_PRODUCT_BUNDLE_IDENTIFIER=org.jkondo.MoblinBrowserValidation \
@@ -27,7 +28,33 @@ jobs:
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: browser-catalyst-results
+          name: upstream-catalyst-results
           path: |
             catalyst.log
             BrowserLayout.xcresult
+  focused:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Prepare focused source validation
+        run: |
+          brew install xcodegen
+          python3 .validation/prepare.py
+          cd BrowserValidation
+          xcodegen generate
+      - name: Compile small browser view and run unchanged test suite on Mac Catalyst
+        working-directory: BrowserValidation
+        run: |
+          set -o pipefail
+          xcodebuild test -quiet -scheme BrowserValidation \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
+            -resultBundlePath FocusedBrowser.xcresult \
+            2>&1 | tee focused.log
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: focused-catalyst-results
+          path: |
+            BrowserValidation/focused.log
+            BrowserValidation/FocusedBrowser.xcresult
