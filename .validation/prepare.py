@@ -27,7 +27,6 @@ class Database: ObservableObject { @Published var bigButtons = false }
     let state = WebBrowserState()
     func getWebBrowser() -> WKWebView { browser }
     func storeSettings() {}
-    func makeToast(title: String) {}
 }
 @main struct BrowserValidationApp: App {
     @StateObject var model = Model()
