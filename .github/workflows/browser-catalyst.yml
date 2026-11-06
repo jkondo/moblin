@@ -53,10 +53,14 @@ jobs:
             -resultBundlePath FocusedBrowser.xcresult \
             CODE_SIGNING_ALLOWED=NO DEVELOPMENT_TEAM= \
             2>&1 | tee focused.log
+          xcrun xcresulttool get test-results summary --path FocusedBrowser.xcresult > summary.json
+          cat summary.json
+          python3 -c "import json; r=json.load(open('summary.json')); assert r['totalTestCount'] >= 7 and r['failedTests'] == 0, r"
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: focused-catalyst-results
           path: |
             BrowserValidation/focused.log
+            BrowserValidation/summary.json
             BrowserValidation/FocusedBrowser.xcresult
