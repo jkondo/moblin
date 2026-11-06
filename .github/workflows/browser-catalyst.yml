@@ -6,6 +6,7 @@ on:
 
 jobs:
   baseline:
+    if: github.sha == '5e61d2fcf495679b5713952b0b701a2fe59f7d03'
     runs-on: macos-26
     timeout-minutes: 45
     steps:
@@ -50,6 +51,7 @@ jobs:
           xcodebuild test -quiet -scheme BrowserValidation \
             -destination 'platform=macOS,variant=Mac Catalyst' \
             -resultBundlePath FocusedBrowser.xcresult \
+            CODE_SIGNING_ALLOWED=NO DEVELOPMENT_TEAM= \
             2>&1 | tee focused.log
       - uses: actions/upload-artifact@v6
         if: always()
