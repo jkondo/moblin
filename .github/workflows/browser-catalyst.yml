@@ -1,0 +1,33 @@
+name: Browser Mac Catalyst validation
+
+on:
+  push:
+    branches: [codex/validate-browser-window]
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Configure unsigned build
+        run: |
+          cp User.template.xcconfig Config/User.xcconfig
+          xcodebuild -version
+      - name: Run browser layout tests on Mac Catalyst
+        run: |
+          set -o pipefail
+          xcodebuild test -scheme Moblin \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
+            -only-testing:MoblinTests/WebBrowserWindowLayoutSuite \
+            -resultBundlePath BrowserLayout.xcresult \
+            CODE_SIGNING_ALLOWED=NO DEVELOPMENT_TEAM= \
+            BASE_PRODUCT_BUNDLE_IDENTIFIER=org.jkondo.MoblinBrowserValidation \
+            2>&1 | tee catalyst.log
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: browser-catalyst-results
+          path: |
+            catalyst.log
+            BrowserLayout.xcresult
